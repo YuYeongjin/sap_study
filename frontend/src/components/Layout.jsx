@@ -1,4 +1,5 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import ChatBot from './ChatBot'
 import './Layout.css'
 
 const navItems = [
@@ -49,6 +50,8 @@ export default function Layout() {
       <main className="main-content">
         <Outlet />
       </main>
+
+      <ChatBot />
     </div>
   )
 }
