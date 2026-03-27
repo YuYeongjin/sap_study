@@ -103,6 +103,8 @@ export const purchaseOrderApi = {
 
   create: (data) => api.post('/purchase-orders', data),
 
+  update: (id, data) => api.put('/purchase-orders', data, { params: { id } }),
+
   delete: (id) => api.delete('/purchase-orders', { params: { id } }),
 }
 
@@ -169,6 +171,8 @@ export const costApi = {
   },
 
   create: (data) => api.post('/cost-entries', data),
+
+  update: (id, data) => api.put('/cost-entries', data, { params: { id } }),
 
   delete: (id) => api.delete('/cost-entries', { params: { id } }),
 }

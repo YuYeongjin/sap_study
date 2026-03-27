@@ -19,6 +19,7 @@ export default function CostManagement() {
   const [filterProjectId, setFilterProjectId] = useState('')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [editItem, setEditItem] = useState(null)
   const [form, setForm] = useState({})
 
 const load = () => {
@@ -42,6 +43,7 @@ const load = () => {
   useEffect(() => { load() }, [filterProjectId])
 
   const openCreate = () => {
+    setEditItem(null)
     setForm({
       entryNumber: `CE-2025-${String(entries.length + 1).padStart(3, '0')}`,
       projectId: filterProjectId || (projects[0]?.id || ''),
@@ -55,10 +57,20 @@ const load = () => {
     setShowModal(true)
   }
 
+  const openEdit = (entry) => {
+    setEditItem(entry)
+    setForm({ ...entry, projectId: entry.project?.id || entry.projectId || '' })
+    setShowModal(true)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     const project = projects.find(p => p.id === Number(form.projectId))
-    await costApi.create({ ...form, project })
+    if (editItem) {
+      await costApi.update(editItem.id, { ...form, project })
+    } else {
+      await costApi.create({ ...form, project })
+    }
     setShowModal(false)
     load()
   }
@@ -214,7 +226,9 @@ const load = () => {
                     <td style={{ fontSize: 12, color: '#888' }}>{c.documentNumber || '-'}</td>
                     <td style={{ fontSize: 12 }}>{c.createdBy}</td>
                     <td>
-                      <button className="btn btn-danger" style={{ fontSize: 11, padding: '3px 8px' }}
+                      <button className="btn btn-default" style={{ fontSize: 11, padding: '3px 8px' }}
+                        onClick={() => openEdit(c)}>수정</button>
+                      <button className="btn btn-danger" style={{ fontSize: 11, padding: '3px 8px', marginLeft: 4 }}
                         onClick={() => handleDelete(c.id)}>삭제</button>
                     </td>
                   </tr>
@@ -230,7 +244,7 @@ const load = () => {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>원가 전표 입력</h3>
+              <h3>{editItem ? '원가 전표 수정' : '원가 전표 입력'}</h3>
               <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -296,7 +310,7 @@ const load = () => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-default" onClick={() => setShowModal(false)}>취소</button>
-                <button type="submit" className="btn btn-primary">입력</button>
+                <button type="submit" className="btn btn-primary">{editItem ? '수정' : '입력'}</button>
               </div>
             </form>
           </div>

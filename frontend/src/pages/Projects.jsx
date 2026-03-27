@@ -21,6 +21,7 @@ export default function Projects() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState({ status: '', keyword: '' })
   const [showModal, setShowModal] = useState(false)
+  const [editItem, setEditItem] = useState(null)
   const [form, setForm] = useState({})
 
   const load = () => {
@@ -46,6 +47,7 @@ export default function Projects() {
   }
 
   const openCreate = () => {
+    setEditItem(null)
     setForm({
       projectCode: '',
       projectName: '',
@@ -55,7 +57,6 @@ export default function Projects() {
       status: 'PLANNING',
       contractAmount: '',
       budget: '',
-      executionBudget: '',
       startDate: '',
       plannedEndDate: '',
       siteManager: ''
@@ -63,11 +64,28 @@ export default function Projects() {
     setShowModal(true)
   }
 
+  const openEdit = (project) => {
+    setEditItem(project)
+    setForm({ ...project })
+    setShowModal(true)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    await projectApi.create(form)
+    if (editItem) {
+      await projectApi.update(editItem.id, form)
+    } else {
+      await projectApi.create(form)
+    }
     setShowModal(false)
     load()
+  }
+
+  const handleDelete = async (id) => {
+    if (window.confirm('프로젝트를 삭제하시겠습니까?')) {
+      await projectApi.delete(id)
+      load()
+    }
   }
 
   return (
@@ -113,12 +131,13 @@ export default function Projects() {
                   <th>착공일</th>
                   <th>준공예정</th>
                   <th>현장소장</th>
+                  <th>작업</th>
                 </tr>
               </thead>
               <tbody>
                 {projects.length === 0 ? (
                   <tr>
-                    <td colSpan="10">
+                    <td colSpan="11">
                       <div className="empty-state">
                         <div className="empty-state-icon">🏗️</div>
                         <div>프로젝트가 없습니다</div>
@@ -154,6 +173,12 @@ export default function Projects() {
                       <td>{formatDate(p.startDate)}</td>
                       <td>{formatDate(p.plannedEndDate)}</td>
                       <td>{p.siteManager}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        <button className="btn btn-default" style={{ fontSize: 11, padding: '3px 8px' }}
+                          onClick={() => openEdit(p)}>수정</button>
+                        <button className="btn btn-danger" style={{ fontSize: 11, padding: '3px 8px', marginLeft: 4 }}
+                          onClick={() => handleDelete(p.id)}>삭제</button>
+                      </td>
                     </tr>
                   )
                 })}
@@ -168,7 +193,7 @@ export default function Projects() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>프로젝트 등록</h3>
+              <h3>{editItem ? '프로젝트 수정' : '프로젝트 등록'}</h3>
               <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -237,7 +262,7 @@ export default function Projects() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-default" onClick={() => setShowModal(false)}>취소</button>
-                <button type="submit" className="btn btn-primary">등록</button>
+                <button type="submit" className="btn btn-primary">{editItem ? '수정' : '등록'}</button>
               </div>
             </form>
           </div>

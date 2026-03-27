@@ -10,6 +10,7 @@
 *&   GET    ?all_summary=X      → get_all_cost_summary()
 *&   GET    (없음)              → find_all()
 *&   POST                       → create_cost_entry()
+*&   PUT    ?id=X               → update_cost_entry(X)
 *&   DELETE ?id=X               → delete_cost_entry(X)
 *&---------------------------------------------------------------------*
 
@@ -22,6 +23,7 @@ CLASS zcl_rest_cost DEFINITION
   PUBLIC SECTION.
     METHODS if_rest_resource~get    REDEFINITION.
     METHODS if_rest_resource~post   REDEFINITION.
+    METHODS if_rest_resource~put    REDEFINITION.
     METHODS if_rest_resource~delete REDEFINITION.
 
   PRIVATE SECTION.
@@ -91,6 +93,25 @@ CLASS zcl_rest_cost IMPLEMENTATION.
         set_json_response(
           iv_json   = /ui2/cl_json=>serialize( data = ls_created compress = abap_true )
           iv_status = 201 ).
+      CATCH cx_sy_dyn_call_error INTO DATA(lx_err).
+        set_error_response( lx_err->get_text( ) ).
+    ENDTRY.
+  ENDMETHOD.
+
+
+  METHOD if_rest_resource~put.
+    DATA ls_entry TYPE zcl_cost_service=>ty_cost_entry.
+    DATA lv_id    TYPE string.
+    lv_id = mo_request->get_form_field( 'id' ).
+    /ui2/cl_json=>deserialize( EXPORTING json = mo_request->get_string_data( )
+                               CHANGING  data = ls_entry ).
+    TRY.
+        DATA(ls_updated) = mo_service->update_cost_entry(
+          iv_cost_id = CONV n( lv_id )
+          is_entry   = ls_entry ).
+        set_json_response( /ui2/cl_json=>serialize( data = ls_updated compress = abap_true ) ).
+      CATCH cx_abap_not_found.
+        set_error_response( iv_msg = 'Cost entry not found' iv_status = 404 ).
       CATCH cx_sy_dyn_call_error INTO DATA(lx_err).
         set_error_response( lx_err->get_text( ) ).
     ENDTRY.

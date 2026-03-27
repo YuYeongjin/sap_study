@@ -50,20 +50,19 @@ service ConstructionService {
     // 필드명을 소문자로 별칭(Alias) 처리하여 리액트와의 연동성을 높였습니다.
     entity projects as select from ZCONSTRUCTION_PROJ {
         ProjectId as id,
-        ProjectCode as code,
-        ProjectName as name,
+        ProjectCode as projectCode, 
+        ProjectName as projectName,
         Location as location,
         Client as client,
-        ProjectType as type,
+        ProjectType as projectType,
         Status as status,
-        ContractAmt as contractAmt,
+        ContractAmt as contractAmount,
         Budget as budget,
         ActualCost as actualCost,
         Waers as currency,
         StartDate as startDate,
         PlanEndDate as endDate,
         ProgressRate as progress,
-        
         /* 계산 필드 */
         case 
             when Budget > 0 then cast((ActualCost * 100 / Budget) as Decimal(5,2))

@@ -21,6 +21,7 @@ export default function Equipment() {
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [editItem, setEditItem] = useState(null)
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [assignTarget, setAssignTarget] = useState(null)
   const [assignProjectId, setAssignProjectId] = useState('')
@@ -40,6 +41,7 @@ export default function Equipment() {
   useEffect(() => { load() }, [filterStatus])
 
   const openCreate = () => {
+    setEditItem(null)
     setForm({
       equipmentCode: '', equipmentName: '', equipmentType: 'EXCAVATOR',
       model: '', manufacturer: '', registrationNumber: '',
@@ -49,9 +51,19 @@ export default function Equipment() {
     setShowModal(true)
   }
 
+  const openEdit = (eq) => {
+    setEditItem(eq)
+    setForm({ ...eq })
+    setShowModal(true)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    await equipmentApi.create(form)
+    if (editItem) {
+      await equipmentApi.update(editItem.id, form)
+    } else {
+      await equipmentApi.create(form)
+    }
     setShowModal(false)
     load()
   }
@@ -169,6 +181,8 @@ export default function Equipment() {
                       <td>{eq.totalOperatingHours}h</td>
                       <td style={{ whiteSpace: 'nowrap' }}>
                         <button className="btn btn-default" style={{ fontSize: 11, padding: '3px 8px' }}
+                          onClick={() => openEdit(eq)}>수정</button>
+                        <button className="btn btn-default" style={{ fontSize: 11, padding: '3px 8px', marginLeft: 4 }}
                           onClick={() => openAssign(eq)}>배치</button>
                         <button className="btn btn-danger" style={{ fontSize: 11, padding: '3px 8px', marginLeft: 4 }}
                           onClick={() => handleDelete(eq.id)}>삭제</button>
@@ -187,7 +201,7 @@ export default function Equipment() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>장비 등록</h3>
+              <h3>{editItem ? '장비 수정' : '장비 등록'}</h3>
               <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -258,7 +272,7 @@ export default function Equipment() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-default" onClick={() => setShowModal(false)}>취소</button>
-                <button type="submit" className="btn btn-primary">등록</button>
+                <button type="submit" className="btn btn-primary">{editItem ? '수정' : '등록'}</button>
               </div>
             </form>
           </div>

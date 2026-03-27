@@ -24,6 +24,7 @@ export default function PurchaseOrders() {
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [editItem, setEditItem] = useState(null)
   const [form, setForm] = useState({})
 
   const load = () => {
@@ -46,6 +47,7 @@ export default function PurchaseOrders() {
   }
 
   const openCreate = () => {
+    setEditItem(null)
     setForm({
       poNumber: `PO-2025-${String(orders.length + 1).padStart(4, '0')}`,
       projectId: projects[0]?.id || '',
@@ -60,12 +62,29 @@ export default function PurchaseOrders() {
     setShowModal(true)
   }
 
+  const openEdit = (po) => {
+    setEditItem(po)
+    setForm({ ...po, projectId: po.project?.id || po.projectId || '' })
+    setShowModal(true)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     const project = projects.find(p => p.id === Number(form.projectId))
-    await purchaseOrderApi.create({ ...form, project })
+    if (editItem) {
+      await purchaseOrderApi.update(editItem.id, { ...form, project })
+    } else {
+      await purchaseOrderApi.create({ ...form, project })
+    }
     setShowModal(false)
     load()
+  }
+
+  const handleDelete = async (id) => {
+    if (window.confirm('발주서를 삭제하시겠습니까?')) {
+      await purchaseOrderApi.delete(id)
+      load()
+    }
   }
 
   return (
@@ -128,11 +147,14 @@ export default function PurchaseOrders() {
                       <td>{formatDate(po.deliveryDate)}</td>
                       <td className="amount">{formatAmount(po.totalAmount)}</td>
                       <td>{po.purchaser}</td>
-                      <td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        <button className="btn btn-default"
+                          style={{ fontSize: 11, padding: '4px 8px' }}
+                          onClick={() => openEdit(po)}>수정</button>
                         {nextStatus && (
                           <button
                             className="btn btn-primary"
-                            style={{ fontSize: 11, padding: '4px 8px' }}
+                            style={{ fontSize: 11, padding: '4px 8px', marginLeft: 4 }}
                             onClick={() => handleStatusUpdate(po.id, nextStatus)}
                           >
                             {PO_STATUS[nextStatus]?.label} 처리
@@ -147,6 +169,13 @@ export default function PurchaseOrders() {
                             취소
                           </button>
                         )}
+                        <button
+                          className="btn btn-danger"
+                          style={{ fontSize: 11, padding: '4px 8px', marginLeft: 4 }}
+                          onClick={() => handleDelete(po.id)}
+                        >
+                          삭제
+                        </button>
                       </td>
                     </tr>
                   )
@@ -162,7 +191,7 @@ export default function PurchaseOrders() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>구매 발주 등록</h3>
+              <h3>{editItem ? '구매 발주 수정' : '구매 발주 등록'}</h3>
               <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -224,7 +253,7 @@ export default function PurchaseOrders() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-default" onClick={() => setShowModal(false)}>취소</button>
-                <button type="submit" className="btn btn-primary">등록</button>
+                <button type="submit" className="btn btn-primary">{editItem ? '수정' : '등록'}</button>
               </div>
             </form>
           </div>

@@ -68,6 +68,14 @@ CLASS zcl_po_service DEFINITION
       RETURNING VALUE(rs_po) TYPE ty_po
       RAISING   cx_sy_dyn_call_error.
 
+    "! 발주 전체 수정 (헤더 + 아이템 재계산)
+    METHODS update_po
+      IMPORTING iv_po_id   TYPE n
+                is_po      TYPE ty_po
+      RETURNING VALUE(rs_po) TYPE ty_po
+      RAISING   cx_sy_dyn_call_error
+                cx_abap_not_found.
+
     "! 발주 상태 변경
     METHODS update_status
       IMPORTING iv_po_id   TYPE n
@@ -210,6 +218,45 @@ CLASS zcl_po_service IMPLEMENTATION.
       ls_db_item-item_no  = lv_item_no.
       MOVE-CORRESPONDING ls_item TO ls_db_item.
       ls_db_item-po_id   = rs_po-po_id.
+      ls_db_item-item_no = lv_item_no.
+      INSERT zconstruction_poi FROM ls_db_item.
+      lv_item_no = lv_item_no + 1.
+    ENDLOOP.
+  ENDMETHOD.
+
+
+  METHOD update_po.
+    DATA ls_db_hdr  TYPE zconstruction_po.
+    DATA ls_db_item TYPE zconstruction_poi.
+
+    " 존재 확인
+    DATA(ls_old) = find_by_id( iv_po_id ).
+
+    rs_po = is_po.
+    rs_po-po_id = iv_po_id.
+
+    " 금액 자동계산
+    calc_amounts( CHANGING cs_po = rs_po ).
+
+    " 헤더 UPDATE
+    MOVE-CORRESPONDING rs_po TO ls_db_hdr.
+    ls_db_hdr-mandt      = sy-mandt.
+    ls_db_hdr-created_by = ls_old-purchaser.   " 헤더에 created_by 없으므로 purchaser 유지는 별도
+    UPDATE zconstruction_po FROM ls_db_hdr.
+    IF sy-subrc <> 0.
+      RAISE EXCEPTION TYPE cx_sy_dyn_call_error.
+    ENDIF.
+
+    " 기존 아이템 삭제 후 재삽입
+    DELETE FROM zconstruction_poi WHERE po_id = @iv_po_id AND mandt = @sy-mandt.
+
+    DATA lv_item_no TYPE n LENGTH 3 VALUE '001'.
+    LOOP AT rs_po-items INTO DATA(ls_item).
+      ls_db_item-mandt    = sy-mandt.
+      ls_db_item-po_id    = iv_po_id.
+      ls_db_item-item_no  = lv_item_no.
+      MOVE-CORRESPONDING ls_item TO ls_db_item.
+      ls_db_item-po_id   = iv_po_id.
       ls_db_item-item_no = lv_item_no.
       INSERT zconstruction_poi FROM ls_db_item.
       lv_item_no = lv_item_no + 1.

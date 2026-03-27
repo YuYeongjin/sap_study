@@ -10,6 +10,7 @@
 *&   GET    (없음)        → find_all()
 *&   POST                 → create_po()
 *&   PUT    ?id=X&status=Y → update_status(X, Y)
+*&   PUT    ?id=X (body)  → update_po(X)
 *&   DELETE ?id=X         → delete_po(X)
 *&---------------------------------------------------------------------*
 
@@ -100,10 +101,22 @@ CLASS zcl_rest_po IMPLEMENTATION.
     lv_status = mo_request->get_form_field( 'status' ).
 
     TRY.
-        mo_service->update_status(
-          iv_po_id  = CONV n( lv_id )
-          iv_status = lv_status ).
-        set_json_response( '{"message":"Status updated successfully"}' ).
+        IF lv_status IS NOT INITIAL.
+          " 상태만 변경
+          mo_service->update_status(
+            iv_po_id  = CONV n( lv_id )
+            iv_status = lv_status ).
+          set_json_response( '{"message":"Status updated successfully"}' ).
+        ELSE.
+          " 전체 수정
+          DATA ls_po TYPE zcl_po_service=>ty_po.
+          /ui2/cl_json=>deserialize( EXPORTING json = mo_request->get_string_data( )
+                                     CHANGING  data = ls_po ).
+          DATA(ls_updated) = mo_service->update_po(
+            iv_po_id = CONV n( lv_id )
+            is_po    = ls_po ).
+          set_json_response( /ui2/cl_json=>serialize( data = ls_updated compress = abap_true ) ).
+        ENDIF.
       CATCH cx_abap_not_found.
         set_error_response( iv_msg = 'Purchase order not found' iv_status = 404 ).
       CATCH cx_sy_dyn_call_error INTO DATA(lx_err).
