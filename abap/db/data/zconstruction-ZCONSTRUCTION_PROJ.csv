@@ -1,0 +1,4 @@
+ProjectId;ProjectCode;ProjectName;Location;Client;ProjectType;Status;ContractAmt;Budget;ActualCost;Waers_code;StartDate;PlanEndDate;ProgressRate
+74f4c920-3944-11ed-a261-0242ac120002;PRJ-2026-001;인천 대교 디지털 트윈;Incheon;국토교통부;Civil;Open;5000000;4000000;1200000;KRW;2026-01-01;2026-12-31;30.00
+85g5d031-4055-22fe-b372-1353bd231113;PRJ-2026-002;한양 스마트 시티 구축;Seoul;서울시;Building;In Progress;3000000;2500000;2000000;KRW;2025-10-01;2027-03-01;80.00
+96h6e142-5166-33ff-c483-2464ce342224;PRJ-2026-003;부산 항만 자동화 설계;Busan;부산항만공사;Plant;Open;8000000;7000000;500000;KRW;2026-03-01;2028-12-31;5.00
