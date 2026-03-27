@@ -6,8 +6,8 @@ Chat Node
 
 from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from ..graph.state import AgentState
-from ..config import OLLAMA_BASE_URL, OLLAMA_MODEL
+from graph.state import AgentState
+from config import OLLAMA_BASE_URL, OLLAMA_MODEL
 
 _SYSTEM_PROMPT = """당신은 건설 프로젝트 관리 SAP 시스템의 AI 어시스턴트입니다.
 다음 메뉴를 제공하는 시스템에서 동작합니다:

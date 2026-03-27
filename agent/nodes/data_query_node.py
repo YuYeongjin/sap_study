@@ -6,8 +6,8 @@ Data Query Node
 """
 
 import re
-from ..graph.state import AgentState
-from ..tools.abap_api import (
+from graph.state import AgentState
+from tools.abap_api import (
     fetch_projects,
     fetch_project_stats,
     fetch_materials,

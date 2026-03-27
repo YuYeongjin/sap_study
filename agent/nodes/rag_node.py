@@ -4,8 +4,8 @@ FAISS 벡터 스토어에서 관련 문서를 검색해 state에 저장.
 실제 LLM 응답은 response_generator 노드에서 생성.
 """
 
-from ..graph.state import AgentState
-from ..rag.vector_store import VectorStore
+from graph.state import AgentState
+from rag.vector_store import VectorStore
 
 
 def rag_node(state: AgentState) -> dict:

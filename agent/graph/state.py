@@ -1,5 +1,4 @@
-from typing import TypedDict, Annotated, Literal
-from langgraph.graph.message import add_messages
+from typing import TypedDict, Literal
 
 
 class AgentState(TypedDict):
@@ -10,17 +9,21 @@ class AgentState(TypedDict):
     history: list[dict]          # [{"role": "user"|"assistant", "content": "..."}]
 
     # 라우팅
-    intent: Literal["navigation", "rag", "data_query", "chat"]
+    intent: Literal["navigation", "rag", "data_query", "crud", "chat"]
 
     # RAG 에이전트 결과
-    retrieved_docs: list[str]    # 검색된 문서 청크
-    sources: list[str]           # 출처 섹션명
+    retrieved_docs: list[str]
+    sources: list[str]
 
     # 데이터 조회 에이전트 결과
-    data_context: str            # ABAP API에서 가져온 데이터 요약
+    data_context: str
 
     # 네비게이션 에이전트 결과
-    navigation_path: str | None  # 이동할 프론트엔드 경로
+    navigation_path: str | None   # 프론트엔드 경로 (e.g. "/projects")
+    navigation_label: str | None  # 화면명 (e.g. "프로젝트 목록")
+
+    # CRUD 에이전트 결과
+    crud_result: str              # 처리 결과 메시지
 
     # 최종 응답
     response: str

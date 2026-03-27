@@ -21,19 +21,23 @@ export default function CostManagement() {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({})
 
-  const load = () => {
-    setLoading(true)
-    const params = filterProjectId ? { projectId: filterProjectId } : {}
-    Promise.all([
-      costApi.getAll(params),
-      costApi.getSummary(params),
-      projectApi.getAll(),
-    ]).then(([eRes, sRes, pRes]) => {
-      setEntries(eRes.data)
-      setSummary(sRes.data)
-      setProjects(pRes.data)
-    }).finally(() => setLoading(false))
-  }
+const load = () => {
+  setLoading(true)
+  const params = filterProjectId ? { projectId: filterProjectId } : {}
+  Promise.all([
+    costApi.getAll(params),
+    costApi.getSummary(params),
+    projectApi.getAll(),
+  ]).then(([eRes, sRes, pRes]) => {
+    setEntries(eRes.data.value || eRes.data || [])
+    
+    setSummary(sRes.data.value || sRes.data || {}) 
+    
+    setProjects(pRes.data.value || pRes.data || [])
+  }).catch(err => {
+    console.error("데이터 로드 실패:", err)
+  }).finally(() => setLoading(false))
+}
 
   useEffect(() => { load() }, [filterProjectId])
 

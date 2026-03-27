@@ -14,16 +14,21 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([])
   const [costSummary, setCostSummary] = useState({})
   const [loading, setLoading] = useState(true)
-
+  // Dashboard.jsx 23~28 라인 수정
   useEffect(() => {
     Promise.all([
       projectApi.getStats(),
       projectApi.getAll({ status: 'IN_PROGRESS' }),
       costApi.getSummary(),
     ]).then(([statsRes, projectsRes, costRes]) => {
-      setStats(statsRes.data)
-      setProjects(projectsRes.data.slice(0, 5))
-      setCostSummary(costRes.data)
+      setStats(statsRes.data);
+
+      const projectList = projectsRes.data.value || [];
+      setProjects(projectList.slice(0, 5));
+
+      setCostSummary(costRes.data.value || costRes.data);
+    }).catch(err => {
+      console.error("데이터 로딩 실패:", err);
     }).finally(() => setLoading(false))
   }, [])
 
@@ -92,9 +97,9 @@ export default function Dashboard() {
               <BarChart data={costChartData} margin={{ top: 10, right: 10, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tickFormatter={v => `${(v/100000000).toFixed(0)}억`} tick={{ fontSize: 11 }} />
+                <YAxis tickFormatter={v => `${(v / 100000000).toFixed(0)}억`} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={v => formatAmount(v)} />
-                <Bar dataKey="금액" fill="#1677ff" radius={[4,4,0,0]} />
+                <Bar dataKey="금액" fill="#1677ff" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

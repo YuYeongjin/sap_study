@@ -14,7 +14,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 
-from ..config import KNOWLEDGE_DIR, EMBEDDING_MODEL, RAG_TOP_K
+from config import KNOWLEDGE_DIR, EMBEDDING_MODEL, RAG_TOP_K
 
 
 def _load_documents(knowledge_dir: str) -> list[Document]:

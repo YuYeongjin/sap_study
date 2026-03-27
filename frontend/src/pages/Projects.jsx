@@ -24,12 +24,19 @@ export default function Projects() {
   const [form, setForm] = useState({})
 
   const load = () => {
-    setLoading(true)
-    const params = {}
-    if (filter.status) params.status = filter.status
-    if (filter.keyword) params.keyword = filter.keyword
-    projectApi.getAll(params).then(r => setProjects(r.data)).finally(() => setLoading(false))
-  }
+  setLoading(true)
+  const params = {}
+  if (filter.status) params.status = filter.status
+  if (filter.keyword) params.keyword = filter.keyword
+  
+  projectApi.getAll(params)
+    .then(r => {
+      const dataList = r.data.value || []; 
+      setProjects(dataList);
+    })
+    .catch(err => console.error("데이터 로드 실패:", err))
+    .finally(() => setLoading(false))
+}
 
   useEffect(() => { load() }, [filter.status])
 

@@ -1,7 +1,7 @@
 """
-FastAPI 서버 - SAP 건설관리 AI 챗봇
+FastAPI 서버 - SAP 건설관리 AI 챗봇 (LangGraph 멀티 에이전트)
 엔드포인트:
-  POST /api/ai/chat   - ChatBot.jsx와 동일한 인터페이스
+  POST /api/ai/chat   - ChatBot.jsx 호환 인터페이스
   GET  /api/ai/status - Ollama 연결 상태 확인
 """
 
@@ -11,12 +11,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from .graph.orchestrator import get_graph
-from .rag.vector_store import VectorStore
-from .config import OLLAMA_BASE_URL, OLLAMA_MODEL, API_HOST, API_PORT
+from graph.orchestrator import get_graph
+from rag.vector_store import VectorStore
+from config import OLLAMA_BASE_URL, OLLAMA_MODEL, API_HOST, API_PORT
 
 
-# --- 시작 시 벡터 스토어 초기화 ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("▶ 벡터 스토어 초기화 중...")
@@ -37,9 +36,10 @@ app.add_middleware(
 )
 
 
-# --- 스키마 (ChatBot.jsx 요청/응답 형식과 동일) ---
+# ── 스키마 ──────────────────────────────────────────────────────────
+
 class ChatMessage(BaseModel):
-    role: str      # "user" | "assistant"
+    role: str
     content: str
 
 
@@ -48,38 +48,53 @@ class ChatRequest(BaseModel):
     history: list[ChatMessage] = []
 
 
+class NavigationInfo(BaseModel):
+    path: str
+    label: str
+
+
 class ChatResponse(BaseModel):
     message: str
     agentType: str
     sources: list[str] = []
-    navigationPath: str | None = None
+    navigation: NavigationInfo | None = None  # ChatBot.jsx: data.navigation?.path
 
 
-# --- 엔드포인트 ---
+# ── 엔드포인트 ──────────────────────────────────────────────────────
 
 @app.post("/api/ai/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
     graph = get_graph()
 
     initial_state = {
-        "message":        req.message,
-        "history":        [m.model_dump() for m in req.history],
-        "intent":         "chat",     # 기본값; intent_classifier가 덮어씀
-        "retrieved_docs": [],
-        "sources":        [],
-        "data_context":   "",
-        "navigation_path": None,
-        "response":       "",
-        "agent_type":     "CHAT",
+        "message":          req.message,
+        "history":          [m.model_dump() for m in req.history],
+        "intent":           "chat",
+        "retrieved_docs":   [],
+        "sources":          [],
+        "data_context":     "",
+        "navigation_path":  None,
+        "navigation_label": None,
+        "crud_result":      "",
+        "response":         "",
+        "agent_type":       "CHAT",
     }
 
     final_state = await graph.ainvoke(initial_state)
 
+    # 네비게이션 정보 구성 (ChatBot.jsx: data.navigation?.path)
+    nav = None
+    if final_state.get("navigation_path"):
+        nav = NavigationInfo(
+            path  = final_state["navigation_path"],
+            label = final_state.get("navigation_label") or "",
+        )
+
     return ChatResponse(
-        message        = final_state.get("response", ""),
-        agentType      = final_state.get("agent_type", "CHAT"),
-        sources        = final_state.get("sources", []),
-        navigationPath = final_state.get("navigation_path"),
+        message    = final_state.get("response", ""),
+        agentType  = final_state.get("agent_type", "CHAT"),
+        sources    = final_state.get("sources", []),
+        navigation = nav,
     )
 
 
@@ -90,20 +105,11 @@ async def status():
             resp = await client.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=5)
             resp.raise_for_status()
             models = [m["name"] for m in resp.json().get("models", [])]
-        return {
-            "available": True,
-            "model":     OLLAMA_MODEL,
-            "models":    models,
-        }
+        return {"available": True, "model": OLLAMA_MODEL, "models": models}
     except Exception as e:
-        return {
-            "available": False,
-            "model":     OLLAMA_MODEL,
-            "error":     str(e),
-        }
+        return {"available": False, "model": OLLAMA_MODEL, "error": str(e)}
 
 
-# --- 직접 실행 ---
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("agent.main:app", host=API_HOST, port=API_PORT, reload=True)
+    uvicorn.run("main:app", host=API_HOST, port=API_PORT, reload=True)
