@@ -21,8 +21,19 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
-      // 나머지 API는 ABAP 서버로 라우팅
-      // /api/projects → /sap/bc/zconstruction/projects
+      // FI (재무회계) → /sap/bc/zfi/*
+      '/api/fi': {
+        target: `http://${SAP_SERVER.host}:${SAP_SERVER.port}`,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/fi/, '/sap/bc/zfi'),
+      },
+      // CO (관리회계) → /sap/bc/zco/*
+      '/api/co': {
+        target: `http://${SAP_SERVER.host}:${SAP_SERVER.port}`,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/co/, '/sap/bc/zco'),
+      },
+      // 나머지 API는 ABAP 서버로 라우팅 (PS/MM/PM)
       '/api': {
         target: `http://${SAP_SERVER.host}:${SAP_SERVER.port}`,
         // auth: SAP_SERVER.auth,
