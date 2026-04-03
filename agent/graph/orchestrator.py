@@ -6,6 +6,7 @@ from nodes.data_query_node import data_query_node
 from nodes.navigation_node import navigation_node
 from nodes.chat_node import chat_node
 from nodes.crud_node import crud_node
+from nodes.abap_explain_node import abap_explain_node
 from nodes.response_generator import response_generator
 
 
@@ -20,11 +21,12 @@ def build_graph() -> StateGraph:
     START
       ↓
     intent_classifier
-      ├── navigation  → navigation_node  → END
-      ├── rag         → rag_node  → response_generator → END
-      ├── data_query  → data_query_node → response_generator → END
-      ├── crud        → crud_node → END
-      └── chat        → chat_node → END
+      ├── navigation    → navigation_node   → END
+      ├── rag           → rag_node          → response_generator → END
+      ├── data_query    → data_query_node   → response_generator → END
+      ├── crud          → crud_node         → END
+      ├── abap_explain  → abap_explain_node → END
+      └── chat          → chat_node         → END
     """
     graph = StateGraph(AgentState)
 
@@ -33,6 +35,7 @@ def build_graph() -> StateGraph:
     graph.add_node("rag",                rag_node)
     graph.add_node("data_query",         data_query_node)
     graph.add_node("crud",               crud_node)
+    graph.add_node("abap_explain",       abap_explain_node)
     graph.add_node("chat",               chat_node)
     graph.add_node("response_generator", response_generator)
 
@@ -42,20 +45,22 @@ def build_graph() -> StateGraph:
         "intent_classifier",
         route_by_intent,
         {
-            "navigation": "navigation",
-            "rag":        "rag",
-            "data_query": "data_query",
-            "crud":       "crud",
-            "chat":       "chat",
+            "navigation":   "navigation",
+            "rag":          "rag",
+            "data_query":   "data_query",
+            "crud":         "crud",
+            "abap_explain": "abap_explain",
+            "chat":         "chat",
         },
     )
 
     graph.add_edge("rag",        "response_generator")
     graph.add_edge("data_query", "response_generator")
 
-    graph.add_edge("navigation",         END)
-    graph.add_edge("crud",               END)
-    graph.add_edge("chat",               END)
+    graph.add_edge("navigation",   END)
+    graph.add_edge("crud",         END)
+    graph.add_edge("abap_explain", END)
+    graph.add_edge("chat",         END)
     graph.add_edge("response_generator", END)
 
     return graph.compile()

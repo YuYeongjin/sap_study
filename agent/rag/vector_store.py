@@ -14,7 +14,8 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 
-from config import KNOWLEDGE_DIR, EMBEDDING_MODEL, RAG_TOP_K
+from config import KNOWLEDGE_DIR, ABAP_CODE_DIR, EMBEDDING_MODEL, RAG_TOP_K
+from rag.abap_loader import load_abap_documents
 
 
 def _load_documents(knowledge_dir: str) -> list[Document]:
@@ -53,12 +54,26 @@ class VectorStore:
 
     def __init__(self):
         embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
-        docs = _load_documents(KNOWLEDGE_DIR)
-        self._store = FAISS.from_documents(docs, embeddings)
-        self._retriever = self._store.as_retriever(
+
+        # SAP 지식 베이스 인덱스
+        knowledge_docs = _load_documents(KNOWLEDGE_DIR)
+        self._knowledge_store = FAISS.from_documents(knowledge_docs, embeddings)
+        self._knowledge_retriever = self._knowledge_store.as_retriever(
             search_type="similarity",
             search_kwargs={"k": RAG_TOP_K},
         )
+
+        # ABAP 코드 인덱스 (별도)
+        abap_docs = load_abap_documents(ABAP_CODE_DIR)
+        if abap_docs:
+            self._abap_store = FAISS.from_documents(abap_docs, embeddings)
+            self._abap_retriever = self._abap_store.as_retriever(
+                search_type="similarity",
+                search_kwargs={"k": 5},
+            )
+        else:
+            self._abap_store = None
+            self._abap_retriever = None
 
     @classmethod
     def get(cls) -> "VectorStore":
@@ -67,4 +82,11 @@ class VectorStore:
         return cls._instance
 
     def retrieve(self, query: str) -> list[Document]:
-        return self._retriever.invoke(query)
+        """SAP 지식 베이스에서 검색."""
+        return self._knowledge_retriever.invoke(query)
+
+    def retrieve_abap(self, query: str) -> list[Document]:
+        """ABAP 코드 인덱스에서 검색."""
+        if self._abap_retriever:
+            return self._abap_retriever.invoke(query)
+        return []

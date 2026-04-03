@@ -9,7 +9,7 @@ class AgentState(TypedDict):
     history: list[dict]          # [{"role": "user"|"assistant", "content": "..."}]
 
     # 라우팅
-    intent: Literal["navigation", "rag", "data_query", "crud", "chat"]
+    intent: Literal["navigation", "rag", "data_query", "crud", "chat", "abap_explain"]
 
     # RAG 에이전트 결과
     retrieved_docs: list[str]

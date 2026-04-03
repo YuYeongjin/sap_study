@@ -3,23 +3,25 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
 const AGENT_BADGES = {
-  CHAT:       { label: '대화',      color: '#3b82f6' },
-  RAG:        { label: '지식 검색', color: '#8b5cf6' },
-  NAVIGATION: { label: '화면 이동', color: '#10b981' },
-  DATA_QUERY: { label: '데이터 조회', color: '#f59e0b' },
-  ERROR:      { label: '오류',      color: '#ef4444' },
+  CHAT:         { label: '대화',        color: '#3b82f6' },
+  RAG:          { label: '지식 검색',   color: '#8b5cf6' },
+  NAVIGATION:   { label: '화면 이동',   color: '#10b981' },
+  DATA_QUERY:   { label: '데이터 조회', color: '#f59e0b' },
+  ABAP_EXPLAIN: { label: 'ABAP 설명',  color: '#0ea5e9' },
+  ERROR:        { label: '오류',        color: '#ef4444' },
 }
 
 const QUICK_ACTIONS = [
   '프로젝트 현황 알려줘',
   'SAP PS 모듈이란?',
+  'ZCL_FI_AR_SERVICE 설명해줘',
+  'ZCL_REST_FI_AP 어떻게 동작해?',
   '자재 화면으로 이동해줘',
-  '원가 관리 화면 열어줘',
 ]
 
 const WELCOME_MSG = {
   role: 'assistant',
-  content: '안녕하세요! SAP 건설 관리 시스템 AI 어시스턴트입니다.\n\n💬 SAP 모듈 질문, 데이터 조회, 화면 이동까지 도와드립니다.\n\n예) "SAP MM 모듈이 뭐야?", "프로젝트 현황 보여줘", "장비 관리 화면으로 이동해줘"',
+  content: '안녕하세요! SAP 건설 관리 시스템 AI 어시스턴트입니다.\n\n💬 SAP 모듈 질문, 데이터 조회, 화면 이동, ABAP 코드 설명까지 도와드립니다.\n\n예) "ZCL_FI_AR_SERVICE 설명해줘", "SAP MM 모듈이 뭐야?", "프로젝트 현황 보여줘"',
   agentType: 'CHAT',
 }
 
@@ -37,7 +39,7 @@ export default function ChatBot() {
   useEffect(() => {
     axios.get('/api/ai/status')
       .then(r => setStatus(r.data))
-      .catch(() => setStatus({ available: false, model: 'llama3.1' }))
+      .catch(() => setStatus({ available: false, model: 'gemma3:12b' }))
   }, [])
 
   // 스크롤 자동 이동
